@@ -6,7 +6,7 @@
                initial-scale=1,
                maximum-scale=1,
                user-scalable=no">
-<<title>Quick Calculator Pro</title>
+<title>Quick Calculator Pro</title>
 
 <style>
 body{
@@ -14,8 +14,10 @@ body{
   height:100%;
   margin:0;
   padding:0;
-  overflow:hidden;          /* ✅ NO SCROLL */
-  overscroll-behavior:none; /* ✅ bounce off */
+  font-family:system-ui;
+  background:#f4f4f4;
+  overflow:hidden;
+  overscroll-behavior:none;
   touch-action:manipulation;
 }
 body{
@@ -29,17 +31,20 @@ body{
 .calc{
   width:100%;
   max-width:420px;
-  height:100dvh;      /* ✅ FIXED viewport height */
+  height:100dvh;
   margin:auto;
   background:#fff;
   padding:12px;
+
   display:flex;
   flex-direction:column;
-  overflow:hidden;    /* ✅ internal scroll bhi band */
+
+  border:2px solid #d0d0d0;   /* ✅ BORDER */
+  border-radius:20px;
+
+  overflow:hidden;
+  box-sizing:border-box;
   position:relative;
-}
-.calc{
-  position:relative;   /* 👈 ADD THIS */
 }
 /* TOP */
 .top{
@@ -77,7 +82,9 @@ body{
   display:flex;
   justify-content:flex-end;
 }
-
+.sci{
+  overscroll-behavior:contain;
+}
 .disp-text{
   font-size:36px;
   font-weight:700;              /* 👈 BOLD RESULT */
@@ -237,19 +244,42 @@ button{ touch-action:manipulation; }
 
 /* 🔹 TOP FRAC BUTTON */
 #fracTop{
-  position:absolute;
-  top:10px;              /* 👈 screen ke upar */
-  left:50%;
-  transform:translateX(-50%);
-  padding:6px 18px;
   border:none;
-  border-radius:18px;
   background:#e0e0e0;
+  border-radius:20px;
+  padding:6px 16px;
   font-size:14px;
-  display:none;          /* 👈 default hidden */
-  z-index:20;
+  display:none;        /* SCI click तक hidden */
 }
 
+#fracTop.active{
+  background:#ff8c2a;
+  color:#fff;
+  font-weight:600;
+}
+
+
+/* 🚫 Calculator, keypad & buttons copy block */
+.calc,
+.keys,
+.keys button,
+.sci,
+.sci button,
+.top button {
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+/* ✅ Only result, preview & history copyable */
+#disp,
+#preview,
+.history,
+.history div {
+  user-select: text;
+  -webkit-user-select: text;
+  -ms-user-select: text;
+}
 </style>
 </head>
 
@@ -259,11 +289,12 @@ button{ touch-action:manipulation; }
 
 <div class="top">
   <button onclick="toggleSCI()">SCI</button>
+   <button id="fracTop" onclick="toggleFrac()">FRAC</button>
   <button onclick="openHistory()">📜</button>
 </div>
 
 <div class="screen">
-      <button id="fracTop" onclick="toggleFrac()">FRAC</button>
+     
   <div class="last" id="last"></div>
 
   <!-- 🔹 LIVE PREVIEW (auto answer before =) -->
@@ -289,9 +320,8 @@ button{ touch-action:manipulation; }
   <button onclick="insert('Math.sqrt(')">√</button>
   <button onclick="insert('Math.cbrt(')">∛</button>
 
-  <button onclick="insert('**2')">x²</button>
-  <button onclick="insert('**')">xʸ</button>
-  <button onclick="insert('Math.PI')">π</button>
+<button onclick="square()">x²</button>
+<button onclick="power()">xʸ</button>  <button onclick="insert('Math.PI')">π</button>
   <button onclick="insert('Math.E')">e</button>
 
   <button onclick="insert('log(')">log</button>
@@ -306,23 +336,25 @@ button{ touch-action:manipulation; }
   <button onclick="bk()">⌫</button>
   <button onclick="insert('/')">÷</button>
 
-  <button onclick="insert('7')">7</button>
-  <button onclick="insert('8')">8</button>
-  <button onclick="insert('9')">9</button>
+ <button ontouchstart="startHold(7)" ontouchend="endHold(7)">7</button>
+<button ontouchstart="startHold(8)" ontouchend="endHold(8)">8</button>
+<button ontouchstart="startHold(9)" ontouchend="endHold(9)">9</button>
+
   <button onclick="insert('*')">×</button>
 
-  <button onclick="insert('4')">4</button>
-  <button onclick="insert('5')">5</button>
-  <button onclick="insert('6')">6</button>
+<button ontouchstart="startHold(4)" ontouchend="endHold(4)">4</button>
+<button ontouchstart="startHold(5)" ontouchend="endHold(5)">5</button>
+<button ontouchstart="startHold(6)" ontouchend="endHold(6)">6</button>
+
   <button onclick="insert('-')">−</button>
 
-  <button onclick="insert('1')">1</button>
-  <button onclick="insert('2')">2</button>
-  <button onclick="insert('3')">3</button>
+ <button ontouchstart="startHold(1)" ontouchend="endHold(1)">1</button>
+<button ontouchstart="startHold(2)" ontouchend="endHold(2)">2</button>
+<button ontouchstart="startHold(3)" ontouchend="endHold(3)">3</button>
   <button onclick="insert('+')">+</button>
 
   <button onclick="insert('00')">00</button>
-  <button onclick="insert('0')">0</button>
+ <button ontouchstart="startHold(0)" ontouchend="endHold(0)">0</button>
   <button onclick="insert('.')">.</button>
   <button class="equal" onclick="calc()">=</button>
 </div>
@@ -340,11 +372,7 @@ button{ touch-action:manipulation; }
 <script>
   // आपका पूरा calculator JS
 
-  /* 🔒 SCROLL LOCK – FINAL */
-  document.addEventListener("touchmove", function(e){
-    e.preventDefault();
-  }, { passive:false });
-    
+
     let fracMode = false;   // FRAC / DEC mode
     let invMode = false;
    
@@ -393,6 +421,10 @@ const exactTrig = {
   "cot(60)": "1/√3",
   "cot(90)": "0"
 };
+const superMap = {
+  0:"⁰", 1:"¹", 2:"²", 3:"³", 4:"⁴",
+  5:"⁵", 6:"⁶", 7:"⁷", 8:"⁸", 9:"⁹"
+};
 const d = document.getElementById("disp");
 const lastEl = document.getElementById("last");
 const pop = document.getElementById("pop");
@@ -420,7 +452,18 @@ function adjustScale(){
 
 
 function insert(v){
+if(powerMode && !/\d/.test(v)){
+  powerMode = false;
+}
+  if(powerMode && /\d/.test(v)){
+    exp += "**" + v;              // calculation
+    d.textContent += superMap[v]; // display (² ³ …)
 
+    powerMode = false;
+    adjustScale();
+    livePreview();
+    return;
+  }
   if(exp.length >= 22){
     popup("Limit Exceeded");
     return;
@@ -437,6 +480,22 @@ function insert(v){
   adjustScale();
   livePreview();
 }
+
+function square(){
+  // calculation
+  exp += "**2";
+
+  // display
+  d.textContent += "²";
+
+  adjustScale();
+  livePreview();
+}
+
+function power(){
+  powerMode = true;   // बस power mode ON
+}
+
 function clr(){
   exp = "";
   d.textContent = "0";
@@ -448,13 +507,57 @@ function clr(){
 const preview = document.getElementById("preview");
 
 function bk(){
-  exp = exp.slice(0,-1);
-  d.textContent = exp || "0";
 
+  // 🔥 POWER DELETE (पूरा exponent हटे)
+  if(/\*\*\d+$/.test(exp)){
+    exp = exp.replace(/\*\*\d+$/, "");   // **5 हटे
+    d.textContent = d.textContent.slice(0,-1); // ⁵ हटे
+  }
+  else{
+    exp = exp.slice(0,-1);
+    d.textContent = exp || "0";
+  }
+
+  powerMode = false;   // safety
   livePreview();
   adjustScale();
 }
 
+function startHold(num){
+  longPressed = false;
+
+  holdTimer = setTimeout(()=>{
+    longPressed = true;
+
+    if(lastNumber !== null){
+      // 🔹 calculation ke liye
+      exp += "**" + num;
+
+      // 🔹 screen ke liye power
+      d.textContent += superMap[num];
+
+      adjustScale();
+      livePreview();
+    }
+  }, 500); // 0.5 second long press
+}
+
+function endHold(num){
+  clearTimeout(holdTimer);
+
+  // agar long press nahi hua → normal tap
+  if(!longPressed){
+    insert(String(num));
+    lastNumber = num;
+  }
+}
+let holdTimer = null;
+let longPressed = false;
+let lastNumber = null;
+
+
+let powerMode = false;
+  
 /* MATH */
 function deg(x){ return x*Math.PI/180; }
 
@@ -572,25 +675,29 @@ function prep(e){
 function calc(){
   try{
     let safeExp = exp.replace(/[+\-*/]$/, "");
-
     lastEl.textContent = safeExp;
-// 🔹 STEP-3: EXACT TRIG RESULT (FRAC MODE)
-if(fracMode && exactTrig[safeExp]){
-  exp = exactTrig[safeExp];
-  d.textContent = exp;
-  preview.textContent = "";
-  return;   // ⛔ आगे decimal calculation मत करो
-}
+
+    // exact fraction mode
+    if(fracMode && exactTrig[safeExp]){
+      exp = exactTrig[safeExp];
+      d.textContent = exp;
+      preview.textContent = "";
+      return;
+    }
+
     let raw = eval(prep(safeExp));
     let r = Number.isInteger(raw) ? raw : raw.toFixed(8);
 
     exp = "" + r;
     d.textContent = exp;
     preview.textContent = "";
-
+// 🔹 HISTORY SAVE
+if(hist.length > 50) hist.shift();
+hist.push(lastEl.textContent + " = " + exp);
+localStorage.setItem("hist", JSON.stringify(hist));
     adjustScale();
   }catch(err){
-    popup(err.message || String(err));  // ✅ REAL REASON SHOW
+    popup(err.message || "Error");
   }
 }
 /* UI */
@@ -677,7 +784,10 @@ function insertTrig(fn){
     insert(fn + "(");
   }
 }
-
+// 🚫 Buttons / keypad par long-press copy disable
+document.querySelectorAll("button").forEach(btn => {
+  btn.addEventListener("contextmenu", e => e.preventDefault());
+});
 </script>
 
 </body>
