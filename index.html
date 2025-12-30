@@ -258,7 +258,7 @@ button{ touch-action:manipulation; }
   font-weight:600;
 }
 
-
+}
 /* 🚫 Calculator, keypad & buttons copy block */
 .calc,
 .keys,
@@ -288,6 +288,27 @@ button{ touch-action:manipulation; }
 <div class="calc">
 
 <div class="top">
+    <button onclick="toggleMenu()">⋮</button>
+    <!-- 🔹 THREE DOT MENU -->
+<div id="menu" style="
+  display:none;
+  position:absolute;
+  top:60px;
+  right:16px;
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.2);
+  z-index:500;
+  overflow:hidden;
+  min-width:180px;
+">
+  <div onclick="openAbout()" style="padding:14px;cursor:pointer;">
+    ℹ️ About Calculator
+  </div>
+  <div onclick="openPrivacy()" style="padding:14px;cursor:pointer;">
+    🔒 Privacy Policy
+  </div>
+</div>
   <button onclick="toggleSCI()">SCI</button>
    <button id="fracTop" onclick="toggleFrac()">FRAC</button>
   <button onclick="openHistory()">📜</button>
@@ -369,6 +390,7 @@ button{ touch-action:manipulation; }
   <button class="hist-btn danger" onclick="clearHist()">Clear</button>
   <button class="hist-btn" onclick="closeHistory()">Close</button>
 </div>
+
 <script>
   // आपका पूरा calculator JS
 
@@ -788,6 +810,61 @@ function insertTrig(fn){
 document.querySelectorAll("button").forEach(btn => {
   btn.addEventListener("contextmenu", e => e.preventDefault());
 });
+function toggleMenu(){
+  const m = document.getElementById("menu");
+  m.style.display = (m.style.display === "block") ? "none" : "block";
+}
+
+function openPrivacy(){
+  window.location.href = "privacy.html";
+}
+
+function openAbout(){
+  alert(
+    "🔹 About Quick Calculator Pro\n\n" +
+
+    "Quick Calculator Pro एक तेज़, हल्का और स्मार्ट Scientific Calculator है,\n" +
+    "जो daily calculation से लेकर advanced scientific calculation तक को आसान बनाता है।\n\n" +
+
+    "✨ Main Features:\n\n" +
+
+    "🔢 Basic Calculator\n" +
+    "Addition, Subtraction, Multiplication, Division\n" +
+    "Percentage (%) और Decimal support\n\n" +
+
+    "📐 Scientific Functions\n" +
+    "sin, cos, tan, cot, sec, cosec\n" +
+    "Inverse (INV) mode\n" +
+    "√ Square Root, ∛ Cube Root\n" +
+    "log, ln, π और e\n\n" +
+
+    "🔺 Power & Square (Special Feature)\n" +
+    "x² → square\n" +
+    "xʸ → power mode\n\n" +
+
+    "🔥 Smart Long Press Power Feature\n" +
+    "पहले कोई number tap करें\n" +
+    "फिर किसी भी digit को long press करें\n" +
+    "वही digit power बन जाता है\n\n" +
+
+    "Examples:\n" +
+    "9 → long press 9 → 9⁹\n" +
+    "3 → long press 5 → 3⁵\n" +
+    "7 → long press 7 → 7⁷\n\n" +
+
+    "🔄 Fraction / Decimal Mode\n" +
+    "FRAC → exact fraction\n" +
+    "DEC → decimal result\n\n" +
+
+    "👁 Live Preview\n" +
+    "= दबाने से पहले result दिखता है\n\n" +
+
+    "📜 History & 📱 Mobile Friendly\n\n" +
+
+    "Built By Ritik Verma The Swan 💞\n" +
+    "© Quick Calculator Pro"
+  );
+}
 </script>
 
 </body>
