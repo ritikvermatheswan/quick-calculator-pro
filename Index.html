@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport"
+      content="width=device-width,
+               initial-scale=1,
+               maximum-scale=1,
+               user-scalable=no">
+<<title>Quick Calculator Pro</title>
+
+<style>
+body{
+  width:100%;
+  height:100%;
+  margin:0;
+  padding:0;
+  overflow:hidden;          /* ✅ NO SCROLL */
+  overscroll-behavior:none; /* ✅ bounce off */
+  touch-action:manipulation;
+}
+body{
+  margin:0;
+  font-family:system-ui;
+  background:#f4f4f4;
+  overflow-x:hidden;
+}
+
+/* CONTAINER */
+.calc{
+  width:100%;
+  max-width:420px;
+  height:100dvh;      /* ✅ FIXED viewport height */
+  margin:auto;
+  background:#fff;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;    /* ✅ internal scroll bhi band */
+  position:relative;
+}
+.calc{
+  position:relative;   /* 👈 ADD THIS */
+}
+/* TOP */
+.top{
+  display:flex;
+  justify-content:space-between;
+}
+.top button{
+  border:none;
+  background:#e0e0e0;
+  border-radius:20px;
+  padding:6px 16px;
+  font-size:14px;
+}
+
+/* DISPLAY */
+.last{
+  font-size:14px;
+  color:#777;
+  text-align:right;
+}
+
+.display{
+  height:56px;
+  margin-top:auto;
+  margin-bottom:8px;
+  padding:0 12px;
+  overflow:hidden;
+
+  display:flex;
+  align-items:flex-end;
+}
+
+.disp-inner{
+  width:100%;
+  display:flex;
+  justify-content:flex-end;
+}
+
+.disp-text{
+  font-size:36px;
+  font-weight:700;              /* 👈 BOLD RESULT */
+  white-space:nowrap;
+
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+#disp{
+  font-weight:700;              /* 👈 typing numbers bold */
+}
+/* SCREEN AREA */
+.screen{
+  position:relative;
+  flex:1;
+}
+#fracTop.active{
+  background:#ff8c2a;
+  color:#fff;
+  font-weight:600;
+}
+/* ऊपर छोटा expression (2+2) */
+.last{
+  position:absolute;
+  right:25px;
+  bottom:305px;   /* 👈 4 ke upar */
+  font-size:30px;
+  color:#777;
+}
+/* 🔹 LIVE PREVIEW POSITION CONTROL */
+#preview{
+  position:absolute;
+  right:25px;     /* right side se align */
+  bottom:220px;   /* 👈 यही main control है */
+  font-size:30px;
+  color:#999;
+  text-align:right;
+}
+.screen{
+  position:relative;
+  flex:1;
+  padding-bottom:80px; /* 👈 result ke liye space reserve */
+}
+
+/* नीचे बड़ा result (4) */
+.display{
+  position:absolute;
+  right:12px;
+  bottom:250px;          /* 👈 fixed bottom */
+  height:56px;
+  display:flex;
+  align-items:flex-end;
+}
+.disp-text{
+  font-size:36px;
+  font-weight:600;
+  white-space:nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.disp-text{
+  font-size:36px;
+  white-space:nowrap;
+
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+
+  transform-origin:right bottom;
+}
+
+/* SCI PANEL */
+.sci{
+  display:none;
+  position:absolute;        /* 👈 KEY FIX */
+  left:12px;
+  right:12px;
+  bottom:380px;              /* 👈 keypad ke upar */
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  background:#fff;
+  padding:10px;
+  border-radius:16px;
+  box-shadow:0 -6px 20px rgba(0,0,0,0.15);
+  z-index:10;
+}
+.sci button{
+  height:42px;
+  border:none;
+  border-radius:14px;
+  background:#ededed;
+}
+
+/* KEYS */
+.keys{
+  margin-top:auto;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+.keys button{
+  height:64px;
+  border:none;
+  border-radius:32px;
+  background:#eee;
+  font-size:20px;
+}
+.keys{
+  position:relative;
+  z-index:5;   /* 👈 keypad always visible */
+}
+.equal{
+  background:#ff8c2a;
+  color:#fff;
+  font-size:24px;
+}
+.sci{
+  pointer-events:auto;
+}
+.keys{
+  pointer-events:auto;
+}
+/* POPUP */
+.popup{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:#e53935;
+  color:#fff;
+  padding:14px 24px;
+  border-radius:14px;
+  display:none;
+  z-index:100;
+}
+
+/* HISTORY */
+.history{
+  position:fixed;
+  inset:0;
+  background:#fff;
+  padding:20px;
+  display:none;
+}
+.hist-btn{
+  padding:6px 16px;
+  border:none;
+  border-radius:20px;
+  background:#e0e0e0;
+}
+.hist-btn.danger{
+  background:#f44336;
+  color:#fff;
+}
+
+button{ touch-action:manipulation; }
+
+
+/* 🔹 TOP FRAC BUTTON */
+#fracTop{
+  position:absolute;
+  top:10px;              /* 👈 screen ke upar */
+  left:50%;
+  transform:translateX(-50%);
+  padding:6px 18px;
+  border:none;
+  border-radius:18px;
+  background:#e0e0e0;
+  font-size:14px;
+  display:none;          /* 👈 default hidden */
+  z-index:20;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="calc">
+
+<div class="top">
+  <button onclick="toggleSCI()">SCI</button>
+  <button onclick="openHistory()">📜</button>
+</div>
+
+<div class="screen">
+      <button id="fracTop" onclick="toggleFrac()">FRAC</button>
+  <div class="last" id="last"></div>
+
+  <!-- 🔹 LIVE PREVIEW (auto answer before =) -->
+ <div id="preview"></div>
+
+  <!-- 🔹 MAIN DISPLAY -->
+  <div class="display">
+    <span id="disp" class="disp-text">0</span>
+  </div>
+</div>
+
+<!-- SCI -->
+<div class="sci" id="sci">
+    
+    <button onclick="toggleINV()">INV</button>
+ 
+ <button class="trig" data-fn="sin" onclick="insertTrig('sin')">sin</button>
+<button class="trig" data-fn="cos" onclick="insertTrig('cos')">cos</button>
+<button class="trig" data-fn="tan" onclick="insertTrig('tan')">tan</button>
+<button class="trig" data-fn="cot" onclick="insertTrig('cot')">cot</button>
+<button class="trig" data-fn="sec" onclick="insertTrig('sec')">sec</button>
+<button class="trig" data-fn="cosec" onclick="insertTrig('cosec')">cosec</button>
+  <button onclick="insert('Math.sqrt(')">√</button>
+  <button onclick="insert('Math.cbrt(')">∛</button>
+
+  <button onclick="insert('**2')">x²</button>
+  <button onclick="insert('**')">xʸ</button>
+  <button onclick="insert('Math.PI')">π</button>
+  <button onclick="insert('Math.E')">e</button>
+
+  <button onclick="insert('log(')">log</button>
+  <button onclick="insert('ln(')">ln</button>
+  <button onclick="insert(')')">)</button>
+</div>
+
+<!-- KEYS -->
+<div class="keys">
+  <button onclick="clr()">AC</button>
+  <button onclick="insert('%')">%</button>
+  <button onclick="bk()">⌫</button>
+  <button onclick="insert('/')">÷</button>
+
+  <button onclick="insert('7')">7</button>
+  <button onclick="insert('8')">8</button>
+  <button onclick="insert('9')">9</button>
+  <button onclick="insert('*')">×</button>
+
+  <button onclick="insert('4')">4</button>
+  <button onclick="insert('5')">5</button>
+  <button onclick="insert('6')">6</button>
+  <button onclick="insert('-')">−</button>
+
+  <button onclick="insert('1')">1</button>
+  <button onclick="insert('2')">2</button>
+  <button onclick="insert('3')">3</button>
+  <button onclick="insert('+')">+</button>
+
+  <button onclick="insert('00')">00</button>
+  <button onclick="insert('0')">0</button>
+  <button onclick="insert('.')">.</button>
+  <button class="equal" onclick="calc()">=</button>
+</div>
+
+</div>
+
+<div class="popup" id="pop"></div>
+
+<div class="history" id="hist">
+  <h3>History</h3>
+  <div id="list"></div><br>
+  <button class="hist-btn danger" onclick="clearHist()">Clear</button>
+  <button class="hist-btn" onclick="closeHistory()">Close</button>
+</div>
+<script>
+  // आपका पूरा calculator JS
+
+  /* 🔒 SCROLL LOCK – FINAL */
+  document.addEventListener("touchmove", function(e){
+    e.preventDefault();
+  }, { passive:false });
+    
+    let fracMode = false;   // FRAC / DEC mode
+    let invMode = false;
+   
+let exp="";
+let hist = JSON.parse(localStorage.getItem("hist") || "[]");
+const exactTrig = {
+  // -------- SIN --------
+  "sin(0)": "0",
+  "sin(30)": "1/2",
+  "sin(45)": "√2/2",
+  "sin(60)": "√3/2",
+  "sin(90)": "1",
+
+  // -------- COS --------
+  "cos(0)": "1",
+  "cos(30)": "√3/2",
+  "cos(45)": "√2/2",
+  "cos(60)": "1/2",
+  "cos(90)": "0",
+
+  // -------- TAN --------
+  "tan(0)": "0",
+  "tan(30)": "1/√3",
+  "tan(45)": "1",
+  "tan(60)": "√3",
+  "tan(90)": "∞",
+
+  // -------- COSEC --------
+  "cosec(0)": "∞",
+  "cosec(30)": "2",
+  "cosec(45)": "√2",
+  "cosec(60)": "2/√3",
+  "cosec(90)": "1",
+
+  // -------- SEC --------
+  "sec(0)": "1",
+  "sec(30)": "2/√3",
+  "sec(45)": "√2",
+  "sec(60)": "2",
+  "sec(90)": "∞",
+
+  // -------- COT --------
+  "cot(0)": "∞",
+  "cot(30)": "√3",
+  "cot(45)": "1",
+  "cot(60)": "1/√3",
+  "cot(90)": "0"
+};
+const d = document.getElementById("disp");
+const lastEl = document.getElementById("last");
+const pop = document.getElementById("pop");
+const sci = document.getElementById("sci");
+const histBox = document.getElementById("hist");
+const list = document.getElementById("list");
+
+function popup(msg){
+  pop.textContent = msg;
+  pop.style.display = "block";
+  setTimeout(()=>pop.style.display="none",3000);
+}
+
+/* SCALE */
+function adjustScale(){
+  let len = exp.length;
+  let s = 1;
+  if(len>=16 && len<=18) s=0.9;
+  else if(len>=19 && len<=20) s=0.8;
+  else if(len>=21) s=0.7;
+  d.style.transform = `scale(${s})`;
+}
+
+/* INPUT */
+
+
+function insert(v){
+
+  if(exp.length >= 22){
+    popup("Limit Exceeded");
+    return;
+  }
+
+  // 👇 OPERATOR REPLACE LOGIC (MAIN FIX)
+  if(/[+\-*/]/.test(v) && /[+\-*/]/.test(exp.slice(-1))){
+    exp = exp.slice(0, -1) + v;   // last sign replace
+  }else{
+    exp += v;
+  }
+
+  d.textContent = exp || "0";
+  adjustScale();
+  livePreview();
+}
+function clr(){
+  exp = "";
+  d.textContent = "0";
+  lastEl.textContent = "";
+  preview.textContent = "";
+
+  adjustScale();
+}
+const preview = document.getElementById("preview");
+
+function bk(){
+  exp = exp.slice(0,-1);
+  d.textContent = exp || "0";
+
+  livePreview();
+  adjustScale();
+}
+
+/* MATH */
+function deg(x){ return x*Math.PI/180; }
+
+function trig(f,x){
+  const r = deg(x);
+
+  if(f==="sin")   return Math.sin(r);
+  if(f==="cos")   return Math.cos(r);
+  if(f==="tan")   return Math.tan(r);
+  if(f==="cot")   return 1/Math.tan(r);
+  if(f==="sec")   return 1/Math.cos(r);
+  if(f==="cosec") return 1/Math.sin(r);
+}
+
+function livePreview(){
+  if(!exp){
+    preview.textContent = "";
+    return;
+  }
+
+  // ✅ bracket balance check
+  let o = (exp.match(/\(/g) || []).length;
+  let c = (exp.match(/\)/g) || []).length;
+
+  if(o !== c){
+    preview.textContent = "";
+    return;
+  }
+
+  // operator ke baad bhi preview
+  let temp = exp.replace(/[+\-*/]$/, "");
+  if(temp !== exp){
+    try{
+      let raw = eval(prep(temp));
+      preview.textContent =
+        Number.isInteger(raw) ? raw : raw.toFixed(8);
+      return;
+    }catch{}
+  }
+
+  try{
+    let raw = eval(prep(exp));
+    if(!isFinite(raw)) return;
+    preview.textContent =
+      Number.isInteger(raw) ? raw : raw.toFixed(8);
+  }catch{
+    preview.textContent = "";
+  }
+}
+function prep(e){
+
+ e = e.replace(
+  /(sin|cos|tan|cot|sec|cosec)inv\(([^)]+)\)/g,
+  function(_, f, x){
+
+    let v;
+    try{
+      v = Number(eval(x));
+    }catch{
+      throw new Error("Invalid input for " + f + "⁻¹");
+    }
+
+    if (isNaN(v))
+      throw new Error(x + " is not a number");
+
+    // DOMAIN RULES
+    if ((f === "sin" || f === "cos") && (v < -1 || v > 1))
+      throw new Error(
+        f + "⁻¹(x) requires −1 ≤ x ≤ 1"
+      );
+
+    if ((f === "sec" || f === "cosec") && Math.abs(v) < 1)
+      throw new Error(
+        f + "⁻¹(x) requires |x| ≥ 1"
+      );
+
+    let r;
+    if (f === "sin")   r = Math.asin(v);
+    if (f === "cos")   r = Math.acos(v);
+    if (f === "tan")   r = Math.atan(v);
+    if (f === "cot")   r = Math.PI/2 - Math.atan(v);
+    if (f === "sec")   r = Math.acos(1 / v);
+    if (f === "cosec") r = Math.asin(1 / v);
+
+    return (r * 180 / Math.PI).toFixed(8);
+  }
+);
+  
+
+  /* 🎯 NORMAL TRIG (DEGREE) */
+  e = e.replace(
+    /(sin|cos|tan|cot|sec|cosec)\(([^)]+)\)/g,
+    (_,f,x)=>{
+      let a = eval(x) * Math.PI / 180;
+
+      if(f==="sin")   return Math.sin(a);
+      if(f==="cos")   return Math.cos(a);
+      if(f==="tan")   return Math.tan(a);
+      if(f==="cot")   return 1/Math.tan(a);
+      if(f==="sec")   return 1/Math.cos(a);
+      if(f==="cosec") return 1/Math.sin(a);
+    }
+  );
+
+  /* 🔢 PERCENT */
+  e = e.replace(/(\d+)%(\d+)/g,"($1*$2/100)");
+
+  /* 📐 LOGS */
+  e = e.replace(/log\(([^)]+)\)/g,"Math.log10($1)");
+  e = e.replace(/ln\(([^)]+)\)/g,"Math.log($1)");
+
+  return e;
+  
+}
+function calc(){
+  try{
+    let safeExp = exp.replace(/[+\-*/]$/, "");
+
+    lastEl.textContent = safeExp;
+// 🔹 STEP-3: EXACT TRIG RESULT (FRAC MODE)
+if(fracMode && exactTrig[safeExp]){
+  exp = exactTrig[safeExp];
+  d.textContent = exp;
+  preview.textContent = "";
+  return;   // ⛔ आगे decimal calculation मत करो
+}
+    let raw = eval(prep(safeExp));
+    let r = Number.isInteger(raw) ? raw : raw.toFixed(8);
+
+    exp = "" + r;
+    d.textContent = exp;
+    preview.textContent = "";
+
+    adjustScale();
+  }catch(err){
+    popup(err.message || String(err));  // ✅ REAL REASON SHOW
+  }
+}
+/* UI */
+function toggleSCI(){
+  if(sci.style.display === "grid"){
+    sci.style.display = "none";
+    document.getElementById("fracTop").style.display = "none";
+  }else{
+    sci.style.display = "grid";
+    document.getElementById("fracTop").style.display = "block";
+  }
+}
+
+function toFraction(x){
+  const tol = 1e-10;
+  let sign = x < 0 ? "-" : "";
+  x = Math.abs(x);
+
+  let h1 = 1, h2 = 0, k1 = 0, k2 = 1;
+  let b = x;
+
+  do{
+    let a = Math.floor(b);
+    let h = a * h1 + h2;
+    let k = a * k1 + k2;
+    h2 = h1; h1 = h;
+    k2 = k1; k1 = k;
+    b = 1 / (b - a);
+  }while(Math.abs(x - h1 / k1) > x * tol);
+
+  return sign + h1 + "/" + k1;
+}
+
+function toggleFrac(){
+  fracMode = !fracMode;
+
+  const btn = document.getElementById("fracTop");
+  btn.textContent = fracMode ? "DEC" : "FRAC";
+  btn.classList.toggle("active", fracMode);
+
+  popup(fracMode ? "Fraction Mode ON" : "Decimal Mode ON");
+
+  if(!exp) return;
+
+  try{
+    // 🔹 EXACT TRIG CHECK
+    let cleanExp = exp.replace(/\s+/g, "");
+    if(fracMode && exactTrig[cleanExp]){
+      d.textContent = exactTrig[cleanExp];
+      return;
+    }
+
+    let raw = eval(prep(exp));
+    d.textContent = fracMode
+      ? toFraction(raw)
+      : (Number.isInteger(raw) ? raw : raw.toFixed(8));
+
+  }catch(err){
+    popup(err.message || "Error");
+  }
+}
+
+function openHistory(){
+  histBox.style.display="block";
+  list.innerHTML=hist.map(h=>"<div>"+h+"</div>").join("");
+}
+
+function closeHistory(){ histBox.style.display="none"; }
+function clearHist(){ hist=[]; localStorage.removeItem("hist"); openHistory(); }
+
+function toggleINV(){
+  invMode = !invMode;
+
+  document.querySelectorAll(".trig").forEach(btn=>{
+    const fn = btn.dataset.fn;
+    btn.textContent = invMode ? fn + "⁻¹" : fn;
+  });
+}
+
+function insertTrig(fn){
+  if(invMode){
+    insert(fn + "inv(");
+  }else{
+    insert(fn + "(");
+  }
+}
+
+</script>
+
+</body>
+</html>
